@@ -17,9 +17,9 @@ public class Main {
         ApplicationLoop applicationLoop = new ApplicationLoop();
 
         executor.scheduleAtFixedRate(() -> {
-            Supplier<Stream<ProductSalesBatch>> salesBatchSupplier = () -> generator.generateSales().stream();
+            Supplier<Stream<ProductSalesBatch>> salesBatchSupplier = () -> generator.generateSales().stream(); //Creating a supplier lambda
 
-            applicationLoop.updateData(salesBatchSupplier.get());
+            applicationLoop.updateData(salesBatchSupplier.get()); //Calling the supplier lambda
 
         }, 0, 250, TimeUnit.MILLISECONDS);
 

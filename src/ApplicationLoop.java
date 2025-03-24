@@ -44,10 +44,14 @@ public final class ApplicationLoop {
             , "Create Country<->Product map"
             , "Show pre-order products by release date"
             , "Show discontinued products by discontinued date"
-            , "Create sales record by country"
-            , "Test"
-            , "Test"
-            , "Test"
+            , "Create sales record by country and output France's revenue"
+            , "Get count of countries"
+            , "Get distinct product objects. Output Pre-order and discontinued using Switch pattern matching"
+            , "Find any pre-order product"
+            , "Find first pre-order product"
+            , "All match pre-order product"
+            , "Any match pre-order product"
+            , "None match product name"
             , "Test"
 
 
@@ -227,7 +231,7 @@ public final class ApplicationLoop {
 
                     }
                     case "14" -> { //Show discontinued products by discontinued date
-                        lastestData.collect(Collectors.partitioningBy(
+                        lastestData.collect(Collectors.partitioningBy( //partitioningBy uses a predicate
                                         x -> x.getProduct().getProductName().toLowerCase().contains("discontinued")))
                                 .get(Boolean.TRUE)
                                 .stream()
@@ -253,10 +257,38 @@ public final class ApplicationLoop {
                             }
                         }
                     }
-                    case "16" -> {
+                    case "16" -> { //Get count of countries
+                        output.accept("There are " + lastestData.collect(Collectors.groupingBy(x -> x.getCountry()))
+                                .entrySet().stream().count() + " countries with sales data");
+                    }
+                    case "17" -> { //Get distinct product objects. Output Pre-order and discontinued using Switch pattern matching
+                        var res = lastestData.map(x -> x.getProduct())
+                                .distinct()
+                                .sorted(Comparator.comparing(x->x.getProductName()))
+                                .toList();
+                                //.forEach(x-> System.out.println(x.getProductName()));
+
+                        for(Products.Product r : res){
+                            switch(r){
+                                case null -> {
+                                    //Do nothing
+                                }
+                                case Products.DiscontinuedProduct d ->{
+                                    output.accept("Pattern matching for DiscontinuedProduct: " + d.getProductName() + " discontinued on " + d.getDiscontinuedDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                                }
+                                case Products.PreOrderProduct p ->{
+                                    output.accept( "Pattern matching for PreOrderProduct: " + p.getProductName() + " releases on " + p.getReleaseDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                                }
+                                default -> {
+                                    //Do nothing
+                                }
+                            }
+                        }
+                    }
+                    case "18" -> {
 
                     }
-                    case "17" -> {
+                    case "19" -> {
 
                     }
 
