@@ -20,21 +20,10 @@ public class Main {
             Supplier<Stream<ProductSalesBatch>> salesBatchSupplier = () -> generator.generateSales().stream();
 
             applicationLoop.updateData(salesBatchSupplier.get());
-            /*System.out.println("\nAnalysis:");
-            SalesAnalysis.findMaxPriceSale(salesBatchSupplier.get()).ifPresent(sale -> System.out.println("Max price sale: " + sale));
-            SalesAnalysis.findMinPriceSale(salesBatchSupplier.get()).ifPresent(sale -> System.out.println("Min price sale: " + sale));
-            System.out.println("Sorted by price descending:");
-            SalesAnalysis.sortByPriceDescending(salesBatchSupplier.get()).forEach(System.out::println);
 
-            System.out.println("Sales in GB:");
-            SalesAnalysis.filterByCountry(salesBatchSupplier.get(), Country.GB).forEach(System.out::println);
-            System.out.println("Any high-value sale above $400? " + SalesAnalysis.anyHighValueSale(salesBatchSupplier.get(), 400));
-
-            System.out.println("--------------------------------------\n");
-            */
         }, 0, 250, TimeUnit.MILLISECONDS);
 
         applicationLoop.run();
-
+        executor.shutdown();
     }
 }

@@ -1,6 +1,6 @@
 package Products;
 
-public interface IProduct {
+public sealed interface IProduct permits IDiscontinuedProduct, Product {
     String getProductName();
     double getPrice();
 

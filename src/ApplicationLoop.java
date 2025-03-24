@@ -1,7 +1,10 @@
 import Enums.Country;
 import Products.DiscontinuedProduct;
 import Products.PreOrderProduct;
+import Sales.CountrySalesRecord;
 import Sales.ProductSalesBatch;
+import Sales.ProductSalesRecord;
+import com.sun.source.tree.Tree;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -27,7 +30,7 @@ public final class ApplicationLoop {
     private Consumer<String> output = System.out::println;
     private Stream<ProductSalesBatch> lastestData = null;
     private final String[] options = {
-            "Lowest products sold  [GroupBy String][Tree Map][Sum Int][Min]"
+            "Lowest products sold [GroupBy String][Tree Map][Sum Int][Min]"
             , "Highest products sold [GroupBy String][Tree Map][Sum Int][Max]"
             , "Lowest revenue by country"
             , "Highest revenue by country"
@@ -84,7 +87,7 @@ public final class ApplicationLoop {
                     case "exit" -> {
                         isRunning = false;
                     }
-                    case "1" -> { //"Lowest products sold"
+                    case "1" -> { //"Lowest products sold [GroupBy String][Tree Map][Sum Int][Min]"
                         if (lastestData != null) {
                             //lastestData.filter(x -> x.getCountry() == Country.AT).forEach(System.out::println);
 
@@ -103,7 +106,7 @@ public final class ApplicationLoop {
 
                         }
                     }
-                    case "2" -> { //"Highest products sold"
+                    case "2" -> { //"Highest products sold [GroupBy String][Tree Map][Sum Int][Max]"
                         if (lastestData != null) {
                             //lastestData.filter(x -> x.getCountry() == Country.AT).forEach(System.out::println);
                             var res = lastestData.collect(Collectors.groupingBy(x -> x.getProduct().getProductName()
@@ -116,7 +119,7 @@ public final class ApplicationLoop {
                             output.accept(res.get().getKey() + " has highest sales with " + String.format("%,d",res.get().getValue()));
                         }
                     }
-                    case "3" -> { //"Lowest revenue by country"
+                    case "3" -> { //"Lowest revenue by country [GroupBy enum][TreeMap][Collectors Sum][min][comparing]"
                         var res = lastestData.collect(Collectors.groupingBy(x -> x.getCountry()
                                         , TreeMap::new
                                         , Collectors.summingDouble(ProductSalesBatch::getRevenue)))
@@ -126,7 +129,7 @@ public final class ApplicationLoop {
 
                         output.accept(res.get().getKey() + " has lowest revenue with €" + String.format("%,.2f",res.get().getValue()));
                     }
-                    case "4" -> { //"Highest revenue by country"
+                    case "4" -> { //"Highest revenue by country [GroupBy enum][TreeMap][Collectors Sum][max][comparing]"
                         var res = lastestData.collect(Collectors.groupingBy(x -> x.getCountry()
                                         , TreeMap::new
                                         , Collectors.summingDouble(ProductSalesBatch::getRevenue)))
@@ -136,13 +139,13 @@ public final class ApplicationLoop {
 
                         output.accept(res.get().getKey() + " has highest revenue with €" + String.format("%,.2f",res.get().getValue()));
                     }
-                    case "5" -> { //"Sales from Germany"
+                    case "5" -> { //"Sales from Germany [filter by enum][collect by String][TreeMap][Sum int][foreach]"
                         lastestData.filter(x -> x.getCountry() == Country.DE)
                                 .collect(Collectors.groupingBy(x -> x.getProduct().getProductName(), TreeMap::new, Collectors.summingInt(ProductSalesBatch::getQuantitySold)))
                                 .forEach((x, y) -> System.out.println(String.format("%,d",y) + " " + x + "(s) sold"));
 
                     }
-                    case "6" -> { //"Sales revenue from Spain"
+                    case "6" -> { //"Sales revenue from Spain [filter by enum][Map to double][sum]"
                         output.accept("Total sales revenue €" + String.format("%,.2f",
                                 lastestData.filter(x -> x.getCountry() == Country.ES)
                                         .mapToDouble(ProductSalesBatch::getRevenue)
@@ -152,18 +155,17 @@ public final class ApplicationLoop {
                                 //.collect(Collectors.groupingBy(x -> x.getProduct().getProductName(), TreeMap::new, Collectors.summingDouble(ProductSalesBatch::getRevenue)))
                                 //.forEach((x, y) -> System.out.println(String.format("€%,.2f",y) + " revenue from " + x));
                     }
-                    case "7" -> { //"First iPhone sales result"
+                    case "7" -> { //"First iPhone sales result [filter by String][find first]"
                         output.accept(
                             lastestData.filter(x -> x.getProduct().getProductName().contains("iPhone"))
                                 .findFirst().toString()
                         );
                     }
-                    case "8" -> { //"First 10 products in sales batch"
+                    case "8" -> { //"First 10 products in sales batch [limit][for each]"
                         lastestData.limit(10).forEach(System.out::println);
                     }
-                    case "9" -> { //"Sorted revenue results by country"
+                    case "9" -> { //"Sorted revenue results by country [collect][group by enum][Tree map][sum double][sort by comparing lambda][foreach]"
                         if (lastestData != null) {
-                            //lastestData.filter(x -> x.getCountry() == Country.AT).forEach(System.out::println);
                             lastestData.collect(Collectors
                                     .groupingBy(ProductSalesBatch::getCountry
                                             , TreeMap::new
@@ -171,11 +173,9 @@ public final class ApplicationLoop {
                                     .entrySet().stream()
                                     .sorted(Comparator.comparing(x -> x.getKey().name()))
                                     .forEach(m -> System.out.println(m.getKey().toString() + ":"+ String.format(" €%,.2f", m.getValue())));
-
-                            //output.accept(lastestData.min(Comparator.comparing(ProductSalesBatch::getPrice)).toString());
                         }
                     }
-                    case "10" -> { //"Top 5 countries by revenue"
+                    case "10" -> { //"Top 5 countries by revenue [collect][Group by enum][Tree map][sum Double][sort][limit][foreach]"
                         output.accept("Top 5 countries by revenue:");
                                 lastestData.collect(Collectors.groupingBy(ProductSalesBatch::getCountry
                                                 , TreeMap::new
@@ -188,17 +188,28 @@ public final class ApplicationLoop {
                                                 System.out.println( x.getKey().toString() + ": €" +String.format("%,.2f", x.getValue())));
 
                     }
-                    case "11" -> { //Create Pre-order/discontinued product Partition Map
+                    case "11" -> { //Create Pre-order/discontinued product Partition Map [collect][partition by string contains][get TRUE][foreach]
                         lastestData.collect(Collectors.partitioningBy(
                                         x -> x.getProduct().getProductName().toLowerCase().contains("pre-order")
                                                 || x.getProduct().getProductName().toLowerCase().contains("discontinued")))
                                 .get(Boolean.TRUE)
                                 .forEach(System.out::println);
                     }
-                    case "12" -> {
-                        lastestData.map(ProductSalesBatch::getCountry);
+                    case "12" -> {  //"Find any product with > €30k revenue [Map to Records][Group by product][Tree map][Sum Double][Filter][find any]"
+                        var res = lastestData.map(entry -> new ProductSalesRecord(entry.getProduct().getProductName(), entry.getRevenue()))
+                                .toList();
+
+                                res.stream().collect(Collectors.groupingBy(x->x.productName()
+                                        , TreeMap::new
+                                        , Collectors.summingDouble(x->x.revenue())))
+                                        .entrySet()
+                                        .stream()
+                                        .filter(x -> x.getValue() > 30_000)
+                                        .findAny().ifPresent(x-> System.out.println(x.getKey().toString() + ": "
+                                                + String.format("€%,.2f",x.getValue())));
+
                     }
-                    case "13" -> { //Show pre-order products by release date
+                    case "13" -> { //Show pre-order products by release date [Collect][Partition][Map to Product-LocalDateTime][Sort by date][Distinct][Output time duration]
                         lastestData.collect(Collectors.partitioningBy(
                                         x -> x.getProduct().getProductName().toLowerCase().contains("pre-order")))
                                 .get(Boolean.TRUE)
@@ -230,8 +241,17 @@ public final class ApplicationLoop {
                                         + x.getValue().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
                                         + " (" + Duration.between(x.getValue(), LocalDateTime.now()).toDays() + " days ago)."));
                     }
-                    case "15" -> { //Create sales record by country
+                    case "15" -> { //Create sales record by country and output France's revenue
+                        var recordsList = lastestData.collect(Collectors.groupingBy(x -> x.getCountry(), TreeMap::new, Collectors.summingDouble(ProductSalesBatch::getRevenue)))
+                                .entrySet().stream()
+                                .map(x -> new CountrySalesRecord(x.getKey(), x.getValue()))
+                                .toList();
 
+                        for(CountrySalesRecord record : recordsList) {
+                            if(record.country() == Country.FR) {
+                                output.accept(record.toString());
+                            }
+                        }
                     }
                     case "16" -> {
 
@@ -251,8 +271,7 @@ public final class ApplicationLoop {
                 output.accept(e.getMessage());
                 try {
                     output.accept("Waiting for the next batch of data");
-
-                    Thread.sleep(1000);
+                    Thread.sleep(500);
                 }
                 catch (InterruptedException ex) {
 
