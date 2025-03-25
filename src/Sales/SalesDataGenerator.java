@@ -6,6 +6,8 @@ import Products.PreOrderProduct;
 import Products.Product;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.time.LocalDateTime;
 
@@ -77,11 +79,11 @@ public class SalesDataGenerator {
             products.add(new Product("Sony Xperia 10 VI", 329.99));
             products.add(new Product("Samsung Galaxy A36", 384.99));
             products.add(new Product("Motorola Edge 50 Neo", 339.99));
-            products.add(new DiscontinuedProduct("Apple iPhone SE 2020", 159.50, LocalDateTime.of(2021, 12, 01, 12,00) ));
-            products.add(new DiscontinuedProduct("Apple iPhone SE 2019", 119.50, LocalDateTime.of(2020, 12, 01, 12,00) ));
-            products.add(new PreOrderProduct("Apple iPhone 17 Pro", 1499.99, LocalDateTime.of(LocalDate.now().plusYears(1).getYear(), 11, 01, 12,00) ));
-            products.add(new PreOrderProduct("Apple iPhone 17", 1199.99, LocalDateTime.of(LocalDate.now().plusYears(1).getYear(), 11, 07, 12,00) ));
-            products.add(new PreOrderProduct("Apple iPhone 17s", 899.99, LocalDateTime.of(LocalDate.now().plusYears(1).getYear(), 11, 30, 12,00) ));
+            products.add(new DiscontinuedProduct("Apple iPhone SE 2020", 159.50, LocalDateTime.of(2021, 12, 1, 12,0) ));
+            products.add(new DiscontinuedProduct("Apple iPhone SE 2019", 119.50, LocalDateTime.of(2020, 12, 1, 12,0) ));
+            products.add(new PreOrderProduct("Apple iPhone 17 Pro", 1499.99, LocalDateTime.of(LocalDate.now().plusYears(1).getYear(), 11, 1, 12,0).atZone(ZoneId.of("America/New_York"))));
+            products.add(new PreOrderProduct("Apple iPhone 17", 1199.99, LocalDateTime.of(LocalDate.now().plusYears(1).getYear(), 11, 7, 12,0).atZone(ZoneId.of("America/New_York"))));
+            products.add(new PreOrderProduct("Apple iPhone 17s", 899.99, LocalDateTime.of(LocalDate.now().plusYears(1).getYear(), 11, 30, 12,0).atZone(ZoneId.of("America/New_York"))));
 
         }
     }

@@ -13,17 +13,26 @@ public class Main {
     public static void main(String[] args) {
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
         SalesDataGenerator generator = new SalesDataGenerator();
-
         ApplicationLoop applicationLoop = new ApplicationLoop();
 
         executor.scheduleAtFixedRate(() -> {
             Supplier<Stream<ProductSalesBatch>> salesBatchSupplier = () -> generator.generateSales().stream(); //Creating a supplier lambda
-
             applicationLoop.updateData(salesBatchSupplier.get()); //Calling the supplier lambda
 
         }, 0, 250, TimeUnit.MILLISECONDS);
 
-        applicationLoop.run();
+        Thread thread = new Thread(applicationLoop);
+        thread.start();
+
+        while (thread.isAlive()) {
+            try {
+                thread.join();
+                //Thread.sleep(100);
+            } catch (InterruptedException e) {
+                //throw new RuntimeException(e);
+            }
+        }
+
         executor.shutdown();
     }
 }

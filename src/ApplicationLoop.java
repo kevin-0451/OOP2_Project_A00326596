@@ -8,6 +8,7 @@ import com.sun.source.tree.Tree;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -19,52 +20,42 @@ import java.util.stream.Stream;
 //DEMO - java.lang is imported by default. But we can import specific classes from it to make calling its methods easier
 import static java.lang.System.out;
 
-public final class ApplicationLoop {
+public final class ApplicationLoop implements Runnable {
 
     private boolean isRunning = true;
     private final Scanner scanner = new Scanner(System.in);
 
     //DEMO Lambdas using the Predicate functional interface
-    private Predicate<String> isYes = s -> (s.trim().toLowerCase().equals("y"));
-    private Predicate<String> isNo = s -> (s.trim().toLowerCase().equals("n"));
-    private Consumer<String> output = System.out::println;
+    //private Predicate<String> isYes = s -> (s.trim().toLowerCase().equals("y"));
+    //private Predicate<String> isNo = s -> (s.trim().toLowerCase().equals("n"));
+    private Consumer<String> output = x-> System.out.println(x);
+    //private Consumer<String> output = System.out::println; //Method reference version
     private Stream<ProductSalesBatch> lastestData = null;
     private final String[] options = {
             "Lowest products sold [GroupBy String][Tree Map][Sum Int][Min]"
             , "Highest products sold [GroupBy String][Tree Map][Sum Int][Max]"
-            , "Lowest revenue by country"
-            , "Highest revenue by country"
-            , "Sales from Germany"
-            , "Sales from Spain"
-            , "First iPhone sales result"
-            , "First 10 products in sales batch"
-            , "Sorted revenue results by country name (alphabetically)"
-            , "Top 5 countries by revenue"
-            , "[Partition] Sales of discontinued and pre-order products"
-            , "Create Country<->Product map"
-            , "Show pre-order products by release date"
-            , "Show discontinued products by discontinued date"
-            , "Create sales record by country and output France's revenue"
-            , "Get count of countries"
-            , "Get distinct product objects. Output Pre-order and discontinued using Switch pattern matching"
-            , "Find any pre-order product"
-            , "Find first pre-order product"
-            , "All match pre-order product"
-            , "Any match pre-order product"
-            , "None match product name"
-            , "Test"
+            , "Lowest revenue by country [GroupBy enum][TreeMap][Collectors Sum][min][comparing]"
+            , "Highest revenue by country [GroupBy enum][TreeMap][Collectors Sum][max][comparing]"
+            , "Sales from Germany [filter by enum][collect by String][TreeMap][Sum int][foreach]"
+            , "Sales revenue from Spain [filter by enum][Map to double][sum]"
+            , "First iPhone sales result [filter by String][find first]"
+            , "First 10 products in sales batch [limit][for each]"
+            , "Sorted revenue results by country [collect][group by enum][Tree map][sum double][sort by comparing lambda][foreach]"
+            , "Top 5 countries by revenue [collect][Group by enum][Tree map][sum Double][sort][limit][foreach]"
+            , "Create Pre-order/discontinued product Partition Map [collect][partition by string contains][get TRUE][foreach]"
+            , "Find any product with > €30k revenue [Map to Records][Group by product][Tree map][Sum Double][Filter][find any]"
+            , "Show pre-order products by release date [Collect][Partition][Map to Product-LocalDateTime][Sort by date][Distinct][Output time duration]"
+            , "Show discontinued products by discontinued date [Collect][Partition By][sorted Comparator][distinct][forEach]"
+            , "Create sales record by country and output France's revenue [collect][group by][map]"
+            , "Get count of countries with sales data [collect][GroupingBy][count]"
+            , "Get distinct product objects. Output Pre-order and discontinued products [map][distinct][sorted comparator][Switch pattern matching]"
+            , "All match pre-order product [map][distinct][all match]"
+            , "Any match discontinued product [map][distinct][any match]"
+            , "None match product name [map][distinct][none match]"
+            , "List all distinct products and their prices [map][distinct][sort][comparator][foreach]"
 
 
     };
-
-
-    public ApplicationLoop(){
-        initialiseVariables();
-    }
-
-    private void initialiseVariables(){
-
-    }
 
     public void run(){
         String lastInput = "";
@@ -145,7 +136,8 @@ public final class ApplicationLoop {
                     }
                     case "5" -> { //"Sales from Germany [filter by enum][collect by String][TreeMap][Sum int][foreach]"
                         lastestData.filter(x -> x.getCountry() == Country.DE)
-                                .collect(Collectors.groupingBy(x -> x.getProduct().getProductName(), TreeMap::new, Collectors.summingInt(ProductSalesBatch::getQuantitySold)))
+                                .collect(Collectors.groupingBy(x -> x.getProduct().getProductName(), TreeMap::new,
+                                        Collectors.summingInt(ProductSalesBatch::getQuantitySold)))
                                 .forEach((x, y) -> System.out.println(String.format("%,d",y) + " " + x + "(s) sold"));
 
                     }
@@ -227,10 +219,12 @@ public final class ApplicationLoop {
                                 .forEach(x-> System.out.println(x.getKey().getProductName() + " releases on "
                                         + x.getValue().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
                                         + " at " + x.getValue().format(DateTimeFormatter.ofPattern("HH:mm"))
-                                        + " (in " + Duration.between(LocalDateTime.now(), x.getValue()).toDays() + " days)."));
+                                        + " (in " + Duration.between(LocalDateTime.now(), x.getValue()).toDays() + " days)."
+                                        + " China release date is " + x.getValue().withZoneSameInstant(ZoneId.of("Asia/Shanghai"))
+                                            .toLocalDateTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))));
 
                     }
-                    case "14" -> { //Show discontinued products by discontinued date
+                    case "14" -> { //Show discontinued products by discontinued date [Collect][Partition By][sorted Comparator][distinct][forEach]
                         lastestData.collect(Collectors.partitioningBy( //partitioningBy uses a predicate
                                         x -> x.getProduct().getProductName().toLowerCase().contains("discontinued")))
                                 .get(Boolean.TRUE)
@@ -245,7 +239,7 @@ public final class ApplicationLoop {
                                         + x.getValue().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
                                         + " (" + Duration.between(x.getValue(), LocalDateTime.now()).toDays() + " days ago)."));
                     }
-                    case "15" -> { //Create sales record by country and output France's revenue
+                    case "15" -> { //Create sales record by country and output France's revenue [collect][group by][map]
                         var recordsList = lastestData.collect(Collectors.groupingBy(x -> x.getCountry(), TreeMap::new, Collectors.summingDouble(ProductSalesBatch::getRevenue)))
                                 .entrySet().stream()
                                 .map(x -> new CountrySalesRecord(x.getKey(), x.getValue()))
@@ -257,27 +251,28 @@ public final class ApplicationLoop {
                             }
                         }
                     }
-                    case "16" -> { //Get count of countries
+                    case "16" -> { //Get count of countries with sales data [collect][GroupingBy][count]
                         output.accept("There are " + lastestData.collect(Collectors.groupingBy(x -> x.getCountry()))
                                 .entrySet().stream().count() + " countries with sales data");
                     }
-                    case "17" -> { //Get distinct product objects. Output Pre-order and discontinued using Switch pattern matching
+                    case "17" -> { //Get distinct product objects. Output Pre-order and discontinued products [map][distinct][sorted comparator][Switch pattern matching]
                         var res = lastestData.map(x -> x.getProduct())
                                 .distinct()
                                 .sorted(Comparator.comparing(x->x.getProductName()))
                                 .toList();
-                                //.forEach(x-> System.out.println(x.getProductName()));
 
-                        for(Products.Product r : res){
+                        for(Products.Product r : res){ //Product class is extended by DiscontinuedProduct and PreOrderProduct
                             switch(r){
-                                case null -> {
-                                    //Do nothing
-                                }
                                 case Products.DiscontinuedProduct d ->{
-                                    output.accept("Pattern matching for DiscontinuedProduct: " + d.getProductName() + " discontinued on " + d.getDiscontinuedDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                                    output.accept("Pattern matching for DiscontinuedProduct: " + d.getProductName() + " discontinued on "
+                                            + d.getDiscontinuedDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
                                 }
                                 case Products.PreOrderProduct p ->{
-                                    output.accept( "Pattern matching for PreOrderProduct: " + p.getProductName() + " releases on " + p.getReleaseDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                                    output.accept( "Pattern matching for PreOrderProduct: " + p.getProductName() + " releases on "
+                                            + p.getReleaseDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                                }
+                                case null -> {
+                                    //Do nothing. Same as the default case but including the "null" case for demonstration
                                 }
                                 default -> {
                                     //Do nothing
@@ -285,11 +280,37 @@ public final class ApplicationLoop {
                             }
                         }
                     }
-                    case "18" -> {
-
+                    case "18" -> { //"All match pre-order product [map][distinct][all match]"
+                        var res = lastestData.map(x -> x.getProduct()).distinct().toList().stream();
+                        if (res.allMatch(x-> x instanceof Products.PreOrderProduct)){
+                            output.accept("All products are pre-order products");
+                        }
+                        else{
+                            output.accept("Not all products are pre-order products");
+                        }
                     }
-                    case "19" -> {
-
+                    case "19" -> { //"Any match discontinued product [map][distinct][any match]"
+                        var res = lastestData.map(x -> x.getProduct()).distinct().toList().stream();
+                        if (res.anyMatch(x-> x instanceof Products.DiscontinuedProduct && x.getPrice() > 150)){
+                            output.accept("Some products are discontinued products with a price > €150");
+                        }
+                        else{
+                            output.accept("No products are discontinued products with a price > €150");
+                        }
+                    }
+                    case "20" -> { //"None match product name [map][distinct][none match]"
+                        var res = lastestData.map(x -> x.getProduct()).distinct().toList().stream();
+                        if (res.noneMatch(x-> x.getPrice() < 100)){
+                            output.accept("No products are < €100" );
+                        }
+                        else{
+                            output.accept("Some products are < €100" );
+                        }
+                    }
+                    case "21" -> { //List all distinct products and their prices [map][distinct][sort][comparator][foreach]
+                        lastestData.map(x -> x.getProduct()).distinct().toList().stream()
+                                .sorted(Comparator.comparing(x->x.getProductName()))
+                                .forEach(x->output.accept(x.getProductName() + " costs " + String.format("€%,.2f", x.getPrice())));
                     }
 
                     default -> {
@@ -300,7 +321,8 @@ public final class ApplicationLoop {
                 lastInput = getNextInput("Please type your response");
             }
             catch (Exception e){
-                output.accept(e.getMessage());
+                //output.accept(e.getMessage()); //Output error message. Uncomment for testing.
+                // Leave commented because the stream will be recreated and the appropriate code will run at a later time
                 try {
                     output.accept("Waiting for the next batch of data");
                     Thread.sleep(500);
@@ -329,8 +351,6 @@ public final class ApplicationLoop {
         return next;
     }
 
-    //DEMO Switch pattern matching - Check if the input matches a suitable pattern before trying to parse it
-    //DEMO Unchecked exceptions - possibility for a NumberFormatError here, so we should use a try catch to parse the text
     private int getNextNumberedSelection(String message){
         String next = getNextInput(message);
         Object testObj = null; //Create an Object reference just for the Switch type pattern matching
