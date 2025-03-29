@@ -52,8 +52,8 @@ public final class ApplicationLoop implements Runnable {
             , "Get count of countries with sales data [collect][GroupingBy][count]"
             , "Output Pre-order and discontinued products [map][distinct][sorted comparator][Switch pattern matching]"
             , "All match pre-order product [map][distinct][all match]"
-            , "Any match discontinued product [map][distinct][any match]"
-            , "None match product name [map][distinct][none match]"
+            , "Any match discontinued product with price > €150 [map][distinct][any match]"
+            , "None match product with price <€100 [map][distinct][none match]"
             , "List all distinct products and their prices [map][distinct][sort][comparator][foreach]"
             , "Output Country and Revenue map [Collect][toMap]"
 
@@ -265,7 +265,7 @@ public final class ApplicationLoop implements Runnable {
                             output.accept("Not all products are pre-order products");
                         }
                     }
-                    case "19" -> { //"Any match discontinued product [map][distinct][any match]"
+                    case "19" -> { //"Any match discontinued product with price > €150  [map][distinct][any match]"
                         var res = lastestData.map(x -> x.getProduct()).distinct().toList().stream();
                         if (res.anyMatch(x-> x instanceof Products.DiscontinuedProduct && x.getPrice() > 150)){
                             output.accept("Some products are discontinued products with a price > €150");
@@ -274,7 +274,7 @@ public final class ApplicationLoop implements Runnable {
                             output.accept("No products are discontinued products with a price > €150");
                         }
                     }
-                    case "20" -> { //"None match product name [map][distinct][none match]"
+                    case "20" -> { //"None match product with price <€100 [map][distinct][none match]"
                         var res = lastestData.map(x -> x.getProduct()).distinct().toList().stream();
                         if (res.noneMatch(x-> x.getPrice() < 100)){
                             output.accept("No products are < €100" );
